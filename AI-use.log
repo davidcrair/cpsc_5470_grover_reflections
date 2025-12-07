@@ -1,0 +1,24 @@
+[$ts] USER_MESSAGES & ACTIONS:
+1) User: Use the attached image... grover progression.  Action: Replaced graph.py with Grover reflection animation (vector + probability bars), generated interactive_graph.html.
+2) User: What is n in this example?  Action: Clarified n=6 (N=64).
+3) User: Make little n a slider.  Action: Added in-page n slider, rebuilt HTML.
+4) User: Rendering shows `}) };`.  Action: Fixed post_script formatting.
+5) User: Same issue.  Action: Further fixed template braces; HTML regenerated.
+6) User: Add basis-state panel + mean line.  Action: Added third panel with amplitudes and mean.
+7) User: y-scale not updating; slider missing.  Action: Autorange y3 in frames; rewired slider init after DOMContentLoaded.
+8) User: Fix amplitude y to [-1,1].  Action: Locked y3 range in layout and frames.
+9) User: Disable n slider, set n=4, no autoplay.  Action: Removed slider JS, default n=4, pause on load.
+10) User: Make amplitude plot ~2x wider.  Action: Adjusted column widths to widen third panel.
+11) User: Show vector as arrow.  Action: Swapped line/markers for arrow annotation on state.
+12) User: Allow more screen width.  Action: Increased canvas width to 1400.
+13) User: Only arrow annotation, no base trace.  Action: Removed base |ψ⟩ trace; arrow via annotations only.
+14) User: Label state axis, show prob=amp^2 in hover.  Action: Added x-axis label; hover shows prob.
+15) User: Remove “Grover as Sequential Reflections” text.  Action: Cleared subplot title.
+16) User: Text “measurement probability...” still shows.  Action: Cleared all subplot titles.
+17) User: |x⟂⟩ at origin wrong.  Action: Moved label left of axis.
+18) User: Still random |x⟂⟩ at origin.  Action: Removed placeholder annotation; repositioned label.
+19) User: Two arrows + label issue.  Action: Removed base arrow; kept frame arrow; adjusted label.
+20) User: How easy to switch to JS / Plotly JS.  Action: Provided explanation (no code changes).
+21) User: Make new JS version without touching graph.py.  Action: Added grover_js.html (Plotly JS).
+22) User: grover_js slider does nothing.  Action: Added Plotly.addFrames after newPlot to wire slider.
+23) User: Export messages + summary.  Action: Logged to AI-use.log (this file).

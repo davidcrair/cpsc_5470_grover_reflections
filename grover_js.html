@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Grover Reflections (JS)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_SVG"></script>
   <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
   <style>
     body {
@@ -62,13 +63,13 @@
 
     // Pre-compute all state angles for history tracking
     const stateHistory = [];
-    stateHistory.push({ angle: theta, label: "|+ⁿ⟩", iteration: 0, isOracle: false });
+    stateHistory.push({ angle: theta, label: "$\\lvert +^{n} \\rangle$", iteration: 0, isOracle: false });
     for (let i = 0; i < numIterations; i++) {
       const current = theta + 2 * theta * i;
       const oracle = -current;
-      stateHistory.push({ angle: oracle, label: `|ψ${i + 1}'⟩`, iteration: i + 1, isOracle: true });
+      stateHistory.push({ angle: oracle, label: `$|\\psi_{${i + 1}}'\\rangle$`, iteration: i + 1, isOracle: true });
       const diffusion = 2 * theta - oracle;
-      stateHistory.push({ angle: diffusion, label: `|ψ${i + 1}⟩`, iteration: i + 1, isOracle: false });
+      stateHistory.push({ angle: diffusion, label: `$|\\psi_{${i + 1}}\\rangle$`, iteration: i + 1, isOracle: false });
     }
 
     const buildFrame = (frameIndex, stageText) => {
@@ -81,10 +82,11 @@
       // Build annotations for all previous states + current state
       const annotations = [
         // Geometric plot axis labels
-        { x: 1.15, y: -0.08, text: "|x⟂⟩", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
-        { x: 0.08, y: 1.18, text: "|x*⟩", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
-        // Reflection line label
-        { x: plusDir[0] * axisLen * 0.75, y: plusDir[1] * axisLen * 1.15, text: "|+ⁿ⟩", showarrow: false, font: { size: 13, color: "#10B981" }, xref: "x", yref: "y" },
+        { x: 1.15, y: -0.08, text: "$|x_{\\perp}\\rangle$", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
+        { x: 0.08, y: 1.18, text: "$|x^{*}\\rangle$", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
+        // Reflection direction |+^n>
+        { x: plusDir[0] * axisLen * 0.75, y: plusDir[1] * axisLen * 1.15, text: "$|+^{n}\\rangle$", showarrow: false, font: { size: 13, color: "#111827" }, xref: "x", yref: "y" },
+        { x: plusDir[0] * axisLen, y: plusDir[1] * axisLen, ax: 0, ay: 0, xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true, arrowhead: 2, arrowsize: 2, arrowwidth: 3, arrowcolor: "#111827", text: "" },
         // Subplot titles
         { x: 0.14, y: 1.06, xref: "paper", yref: "paper", text: "<b>State Space</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
         { x: 0.42, y: 1.06, xref: "paper", yref: "paper", text: "<b>Probabilities</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
@@ -95,7 +97,7 @@
 
       // Add arrows for all states up to current frame
       // Diffusion states = solid arrows, Oracle states = dashed arrows
-      const oracleShapes = [];
+      const extraShapes = [];
 
       for (let i = 0; i <= frameIndex; i++) {
         const state = stateHistory[i];
@@ -104,9 +106,55 @@
         const y = Math.sin(state.angle);
         const isCurrent = (i === frameIndex);
 
+        // Calculate text offset direction (outward from origin)
+        const labelOffset = 0.12;
+        const labelX = x * (1 + labelOffset);
+        const labelY = y * (1 + labelOffset);
+
+        // Skip drawing the initial |+^n> arrow here (we already render a permanent black vector)
+        if (state.iteration === 0) {
+          continue;
+        }
+
+        // Add black dashed connecting arrow from previous state to this state (if not the first state)
+        if (i > 0) {
+          const prevState = stateHistory[i - 1];
+          const prevX = Math.cos(prevState.angle);
+          const prevY = Math.sin(prevState.angle);
+
+          // Dashed line part (shape)
+          extraShapes.push({
+            type: "line",
+            x0: prevX, y0: prevY,
+            x1: x, y1: y,
+            xref: "x", yref: "y",
+            line: { color: "#374151", width: 1.5, dash: "dot" }
+          });
+
+          // Arrowhead at the tip (annotation)
+          // Position arrowhead slightly back from the tip to show direction
+          const dx = x - prevX;
+          const dy = y - prevY;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const arrowStartX = x - (dx / len) * 0.12;
+          const arrowStartY = y - (dy / len) * 0.12;
+
+          annotations.push({
+            x: x, y: y,
+            ax: arrowStartX, ay: arrowStartY,
+            xref: "x", yref: "y", axref: "x", ayref: "y",
+            showarrow: true,
+            arrowhead: 2,
+            arrowsize: 1.2,
+            arrowwidth: 1.5,
+            arrowcolor: "#374151",
+            text: ""
+          });
+        }
+
         if (state.isOracle) {
-          // Oracle states shown as dashed arrows
-          oracleShapes.push({
+          // Oracle states shown as dashed arrows from origin
+          extraShapes.push({
             type: "line",
             x0: 0, y0: 0,
             x1: x, y1: y,
@@ -114,20 +162,30 @@
             line: { color: color, width: isCurrent ? 2.5 : 1.5, dash: "dash" }
           });
 
-          // Add arrowhead and label
+          // Add arrowhead at the tip
           annotations.push({
             x: x, y: y,
-            ax: x * 0.8, ay: y * 0.8,
+            ax: x * 0.85, ay: y * 0.85,
             xref: "x", yref: "y", axref: "x", ayref: "y",
             showarrow: true, arrowhead: 2,
             arrowsize: isCurrent ? 2 : 1.2,
             arrowwidth: isCurrent ? 2 : 1.5,
             arrowcolor: color,
-            text: isCurrent ? state.label : "",
+            text: "",
             font: { size: 12, color: color }
+          });
+
+          // Add label at the tip (persist across frames)
+          annotations.push({
+            x: labelX, y: labelY,
+            xref: "x", yref: "y",
+            showarrow: false,
+            text: state.label,
+            font: { size: isCurrent ? 12 : 10, color: color }
           });
         } else {
           // Diffusion states (and initial state) shown as solid arrows
+          // Arrow from origin to tip
           annotations.push({
             x: x, y: y, ax: 0, ay: 0,
             xref: "x", yref: "y", axref: "x", ayref: "y",
@@ -136,14 +194,26 @@
             arrowsize: isCurrent ? 2 : 1.5,
             arrowwidth: isCurrent ? 3 : 2,
             arrowcolor: color,
-            text: isCurrent ? state.label : (state.iteration === 0 ? "" : `|ψ${state.iteration}⟩`),
+            text: "",
             font: { size: isCurrent ? 13 : 11, color: color }
           });
+
+          // Add label at the tip (separate annotation)
+          const labelText = state.iteration === 0 ? "" : state.label;
+          if (labelText) {
+            annotations.push({
+              x: labelX, y: labelY,
+              xref: "x", yref: "y",
+              showarrow: false,
+              text: labelText,
+              font: { size: isCurrent ? 13 : 11, color: color }
+            });
+          }
         }
       }
 
-      // Combine base shapes with oracle shapes
-      const frameShapes = [...shapes, ...oracleShapes];
+      // Combine base shapes with extra shapes (oracle lines + connecting lines)
+      const frameShapes = [...shapes, ...extraShapes];
 
       return {
         name: stateHistory[frameIndex].iteration === 0 ? "0 |+^n>" :
@@ -167,7 +237,7 @@
     const data = [
       {
         type: "bar",
-        x: ["marked |x*>", "unmarked subspace"],
+        x: ["marked $|x^{*}\\rangle$", "unmarked subspace"],
         y: probs0,
         marker: { color: ["#F26B38", "#CBD5E1"] },
         hovertemplate: "%{y:.3f}",
@@ -200,7 +270,6 @@
     const shapes = [
       { type: "line", x0: -axisLen, y0: 0, x1: axisLen, y1: 0, line: { color: "#6B7280", width: 1.5 } },
       { type: "line", x0: 0, y0: -axisLen, x1: 0, y1: axisLen, line: { color: "#6B7280", width: 1.5, dash: "dash" } },
-      { type: "line", x0: -axisLen * plusDir[0], y0: -axisLen * plusDir[1], x1: axisLen * plusDir[0], y1: axisLen * plusDir[1], line: { color: "#10B981", width: 2.5 } },
     ];
 
     // Layout
@@ -230,14 +299,6 @@
         { x: 0.78, y: 1.06, xref: "paper", yref: "paper", text: "<b>Amplitudes</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
         // Current step info (will be updated in frames)
         { x: 0.5, y: -0.02, xref: "paper", yref: "paper", text: `θ = ${(theta * 180 / Math.PI).toFixed(2)}° — Start at |+ⁿ⟩`, showarrow: false, font: { size: 14, color: "#6b7280" } },
-        // Initial state vector arrow (black)
-        {
-          x: Math.cos(startAngle), y: Math.sin(startAngle),
-          ax: 0, ay: 0,
-          xref: "x", yref: "y", axref: "x", ayref: "y",
-          showarrow: true, arrowhead: 2, arrowsize: 2, arrowwidth: 3, arrowcolor: "#1f2937",
-          text: "|+ⁿ⟩", font: { size: 13, color: "#1f2937" }
-        },
       ],
       sliders: [],
       updatemenus: [
@@ -255,10 +316,10 @@
 
     // Frames - build using state history
     const frames = [];
-    const stageTexts = [`Start at |+ⁿ⟩ (θ = ${(theta * 180 / Math.PI).toFixed(2)}°)`];
+    const stageTexts = [`Start at $|+^{n}\\rangle$ ($\\theta = ${(theta * 180 / Math.PI).toFixed(2)}^{\\circ}$)`];
     for (let i = 0; i < numIterations; i++) {
-      stageTexts.push(`Iteration ${i + 1}: oracle reflects |ψ⟩ across |x⟂⟩`);
-      stageTexts.push(`Iteration ${i + 1}: diffusion reflects across |+ⁿ⟩, rotating by 2θ`);
+      stageTexts.push(`Iteration ${i + 1}: oracle reflects $|\\psi\\rangle$ across $|x_{\\perp}\\rangle$`);
+      stageTexts.push(`Iteration ${i + 1}: diffusion reflects across $|+^{n}\\rangle$, rotating by $2\\theta$`);
     }
 
     for (let i = 0; i < stateHistory.length; i++) {
@@ -282,6 +343,42 @@
 
     Plotly.newPlot('grover', data, layout, { responsive: true }).then(() => {
       Plotly.addFrames('grover', frames);
+
+      // Custom handlers to properly update annotations when slider/animation changes
+      // This fixes the issue where annotations don't disappear when going backwards
+      const groverDiv = document.getElementById('grover');
+
+      // Track current frame to properly update on any change
+      let lastFrameIndex = 0;
+
+      const updateToFrame = (frameIndex) => {
+        if (frameIndex !== undefined && frameIndex !== lastFrameIndex) {
+          lastFrameIndex = frameIndex;
+          const frame = frames[frameIndex];
+          if (frame && frame.layout) {
+            // Use relayout to properly replace annotations and shapes
+            Plotly.relayout('grover', {
+              annotations: frame.layout.annotations,
+              shapes: frame.layout.shapes
+            });
+          }
+        }
+      };
+
+      // Listen for slider changes
+      groverDiv.on('plotly_sliderchange', function (eventData) {
+        updateToFrame(eventData.slider.active);
+      });
+
+      // Also listen for animation frame changes
+      groverDiv.on('plotly_animatingframe', function (eventData) {
+        // Find the frame index by name
+        const frameName = eventData.name;
+        const frameIndex = frames.findIndex(f => f.name === frameName);
+        if (frameIndex >= 0) {
+          updateToFrame(frameIndex);
+        }
+      });
     });
   </script>
 </body>
