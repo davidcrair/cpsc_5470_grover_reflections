@@ -62,10 +62,46 @@
       margin: 8px 0 8px 16px;
       padding: 0;
     }
+
+    .callout {
+      max-width: 960px;
+      margin: 10px auto 8px auto;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .callout .icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .callout.slider {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E3A8A;
+    }
+
+    .callout.refresh {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      color: #92400E;
+    }
   </style>
 </head>
 
 <body>
+  <div id="slider-hint" class="callout slider">
+    <span class="icon">🎚️</span>
+    <span>Use the slider to explore how the system evolves step by step.</span>
+  </div>
+  <div id="refresh-hint" class="callout refresh">
+    <span class="icon">⚠️</span>
+    <span>If anything looks off, refresh the page and use the slider again.</span>
+  </div>
   <div id="grover"></div>
   <div id="opinfo" style="text-align:center; margin-top:6px;"></div>
 
@@ -192,6 +228,12 @@
       const { amps, mean } = amplitudeData(angle);
       const probsSq = amps.map((a) => a * a);
 
+      // Previous-step data for faint/dashed outlines
+      const prevState = frameIndex > 0 ? stateHistory[frameIndex - 1] : null;
+      const prevAngle = prevState ? prevState.angle : null;
+      const { amps: prevAmps, mean: prevMean } = prevAngle !== null ? amplitudeData(prevAngle) : { amps: Array(N).fill(0), mean: 0 };
+      const [pMarkedPrev, pOtherPrev] = prevAngle !== null ? probData(prevAngle) : [0, 0];
+
       // Build annotations for all previous states + current state
       const annotations = [
         // Geometric plot axis labels
@@ -209,6 +251,41 @@
       // Add arrows for all states up to current frame
       // Diffusion states = solid arrows, Oracle states = dashed arrows
       const extraShapes = [];
+      // Dashed outlines for previous-step bars (probability and amplitude)
+      const prevShapes = [];
+
+      if (prevState) {
+        const probHeights = [pMarkedPrev, pOtherPrev];
+        for (let i = 0; i < probHeights.length; i++) {
+          const xCenter = i;
+          prevShapes.push({
+            type: "rect",
+            xref: "x2",
+            yref: "y2",
+            x0: xCenter - 0.4,
+            x1: xCenter + 0.4,
+            y0: 0,
+            y1: probHeights[i],
+            line: { color: "#6B7280", width: 1.2, dash: "dash" },
+            fillcolor: "rgba(0,0,0,0)"
+          });
+        }
+
+        for (let i = 0; i < prevAmps.length; i++) {
+          const xCenter = i;
+          prevShapes.push({
+            type: "rect",
+            xref: "x3",
+            yref: "y3",
+            x0: xCenter - 0.4,
+            x1: xCenter + 0.4,
+            y0: 0,
+            y1: prevAmps[i],
+            line: { color: "#6B7280", width: 1.0, dash: "dash" },
+            fillcolor: "rgba(0,0,0,0)"
+          });
+        }
+      }
 
       for (let i = 0; i <= frameIndex; i++) {
         const state = stateHistory[i];
@@ -324,7 +401,7 @@
       }
 
       // Combine base shapes with extra shapes (oracle lines + connecting lines)
-      const frameShapes = [...shapes, ...extraShapes];
+      const frameShapes = [...shapes, ...extraShapes, ...prevShapes];
 
       return {
         name: stateHistory[frameIndex].iteration === 0 ? "0 |+^n>" :
@@ -332,9 +409,56 @@
             `${stateHistory[frameIndex].iteration}a oracle` :
             `${stateHistory[frameIndex].iteration}b diffusion`),
         data: [
-          { y: [pMarked, pOther] },
-          { x: xTicks, y: amps, customdata: probsSq },
-          { x: xTicks, y: Array(N).fill(mean) },
+          {
+            type: "bar",
+            x: ["marked $|x^{*}\\rangle$", "$|x_{\\perp}\\rangle$"],
+            y: [pMarkedPrev, pOtherPrev],
+            marker: {
+              color: ["rgba(242,107,56,0.15)", "rgba(203,213,225,0.15)"],
+              line: { color: "rgba(0,0,0,0)", width: 0 }
+            },
+            opacity: prevState ? 1 : 0,
+            hoverinfo: "skip",
+            xaxis: "x2",
+            yaxis: "y2",
+            name: "Last step",
+            legendgroup: "step",
+            showlegend: true
+          },
+          {
+            y: [pMarked, pOther]
+          },
+          {
+            type: "bar",
+            x: xTicks,
+            y: prevAmps,
+            marker: {
+              color: ["rgba(242,107,56,0.15)"].concat(Array(N - 1).fill("rgba(203,213,225,0.15)")),
+              line: { color: "rgba(0,0,0,0)", width: 0 }
+            },
+            hoverinfo: "skip",
+            opacity: prevState ? 1 : 0,
+            xaxis: "x3",
+            yaxis: "y3",
+            name: "Last step",
+            legendgroup: "step",
+            showlegend: false
+          },
+          {
+            x: xTicks,
+            y: amps,
+            customdata: probsSq
+          },
+          {
+            x: xTicks,
+            y: Array(N).fill(mean),
+            type: "scatter",
+            mode: "lines",
+            line: { color: "#10B981", dash: "dash" },
+            hoverinfo: "skip",
+            name: "Mean amplitude",
+            showlegend: true
+          },
         ],
         layout: { annotations, shapes: frameShapes }
       };
@@ -349,21 +473,59 @@
       {
         type: "bar",
         x: ["marked $|x^{*}\\rangle$", "$|x_{\\perp}\\rangle$"],
+        y: [0, 0],
+        marker: {
+          color: ["rgba(242,107,56,0.15)", "rgba(203,213,225,0.15)"],
+          line: { color: "rgba(0,0,0,0)", width: 0 }
+        },
+        opacity: 0,
+        hoverinfo: "skip",
+        xaxis: "x2",
+        yaxis: "y2",
+        name: "Last step",
+        legendgroup: "step",
+        showlegend: true
+      },
+      {
+        type: "bar",
+        x: ["marked $|x^{*}\\rangle$", "$|x_{\\perp}\\rangle$"],
         y: probs0,
-        marker: { color: ["#F26B38", "#CBD5E1"] },
+        marker: { color: ["#F26B38", "#CBD5E1"], line: { color: "#111827", width: 1.4 } },
         hovertemplate: "%{y:.3f}",
         xaxis: "x2",
-        yaxis: "y2"
+        yaxis: "y2",
+        name: "Current step",
+        legendgroup: "step",
+        showlegend: true
+      },
+      {
+        type: "bar",
+        x: xTicks,
+        y: Array(N).fill(0),
+        marker: {
+          color: ["rgba(242,107,56,0.15)"].concat(Array(N - 1).fill("rgba(203,213,225,0.15)")),
+          line: { color: "rgba(0,0,0,0)", width: 0 }
+        },
+        hoverinfo: "skip",
+        opacity: 0,
+        xaxis: "x3",
+        yaxis: "y3",
+        name: "Last step",
+        legendgroup: "step",
+        showlegend: false
       },
       {
         type: "bar",
         x: xTicks,
         y: amps0,
         customdata: amps0.map((a) => a * a),
-        marker: { color: ["#F26B38"].concat(Array(N - 1).fill("#CBD5E1")) },
+        marker: { color: ["#F26B38"].concat(Array(N - 1).fill("#CBD5E1")), line: { color: "#111827", width: 1.1 } },
         hovertemplate: "state %{x}<br>amp %{y:.3f}<br>prob %{customdata:.3f}",
         xaxis: "x3",
-        yaxis: "y3"
+        yaxis: "y3",
+        name: "Current step",
+        legendgroup: "step",
+        showlegend: false
       },
       {
         type: "scatter",
@@ -373,7 +535,9 @@
         line: { color: "#10B981", dash: "dash" },
         hoverinfo: "skip",
         xaxis: "x3",
-        yaxis: "y3"
+        yaxis: "y3",
+        name: "Mean amplitude",
+        showlegend: true
       }
     ];
 
@@ -389,7 +553,9 @@
       width: 1400,
       margin: { t: 80, r: 40, l: 60, b: 90 },
       bargap: 0.25,
-      showlegend: false,
+      barmode: "overlay",
+      showlegend: true,
+      legend: { x: 0.82, y: 1.12, orientation: "h", font: { size: 13 } },
       title: { text: "Grover's Search as Alternating Reflections", x: 0.5, font: { size: 20 } },
       xaxis: { anchor: "y", domain: [0.0, 0.28], range: [-1.25, 1.25], showgrid: false, zeroline: false },
       yaxis: { anchor: "x", domain: [0, 1], range: [-1.25, 1.25], showgrid: false, zeroline: false, scaleanchor: "x", scaleratio: 1 },
@@ -412,17 +578,7 @@
         { x: 0.5, y: -0.02, xref: "paper", yref: "paper", text: `θ = ${(theta * 180 / Math.PI).toFixed(2)}° — Start at |+ⁿ⟩`, showarrow: false, font: { size: 14, color: "#6b7280" } },
       ],
       sliders: [],
-      updatemenus: [
-        {
-          type: "buttons",
-          showactive: true,
-          x: 0.99, y: 1.08, xanchor: "right",
-          buttons: [
-            { label: "▶ Play", method: "animate", args: [null, { frame: { duration: frameMs, redraw: true }, transition: { duration: 180 }, fromcurrent: true }] },
-            { label: "⏸ Pause", method: "animate", args: [[null], { mode: "immediate", frame: { duration: 0, redraw: false } }] },
-          ]
-        }
-      ]
+      updatemenus: []
     };
 
     // Frames - build using state history
