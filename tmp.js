@@ -1,141 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-  <meta charset="UTF-8" />
-  <title>Grover Reflections (JS)</title>
-  <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-      tex2jax: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
-      },
-      messageStyle: "none"
-    });
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_SVG"></script>
-  <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 12px;
-      font-family: sans-serif;
-    }
-
-    #opinfo {
-      margin: 6px 0 10px 0;
-      font-size: 14px;
-      line-height: 1.35;
-      color: #111827;
-    }
-
-    #grover {
-      width: 100%;
-      height: 640px;
-    }
-
-    .explainer {
-      max-width: 960px;
-      margin: 28px auto 40px auto;
-      line-height: 1.55;
-      color: #1f2937;
-      font-size: 15px;
-    }
-
-    .explainer h2 {
-      margin: 0 0 12px 0;
-      font-size: 20px;
-      color: #111827;
-    }
-
-    .explainer h3 {
-      margin: 22px 0 8px 0;
-      font-size: 17px;
-      color: #111827;
-    }
-
-    .explainer p {
-      margin: 8px 0;
-    }
-
-    .explainer ul {
-      margin: 8px 0 8px 16px;
-      padding: 0;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="grover"></div>
-  <div id="opinfo" style="text-align:center; margin-top:6px;"></div>
-
-  <div id="explainer" class="explainer">
-    <h2>Grover's Algorithm in Brief</h2>
-    <p>Grover's search finds a marked item with only <span>$O(\sqrt{N})$</span> oracle calls (vs. <span>$O(N)$</span>
-      classically) by alternating two reflections: the phase oracle (flips the marked state's phase) and the diffusion
-      operator (reflects amplitudes about their mean). Repeating these steps rotates the state toward the marked item,
-      boosting its measurement probability. Too many iterations rotate past the optimum; with one marked item, the best
-      count is <span>$\approx \tfrac{\pi}{4}\sqrt{N}$</span>. With multiple marked items, the optimal count changes.</p>
-
-    <h3>Searching Problem</h3>
-    <p>Given data indexed by <span>$x \in \{0,1\}^n$</span> and a Boolean function <span>$f : \{0,1\}^n \to
-        \{0,1\}$</span>, find the marked item <span>$x_*$</span> with <span>$f(x_*) = 1$</span>. The phase-oracle form:
-    </p>
-    <p style="text-align:center;">$$
-      O_f^\pm \lvert x \rangle =
-      \begin{cases}
-      -\lvert x \rangle, & x = x_* \\
-      \lvert x \rangle, & \text{otherwise}
-      \end{cases}
-      $$</p>
-
-    <h3>Oracles as Reflections</h3>
-    <p>A reflection about <span>$\lvert 0^n \rangle$</span> is</p>
-    <p style="text-align:center;">$$
-      S_0^\pm = I - 2\lvert 0^n \rangle\langle 0^n \rvert, \qquad
-      S_0^\pm \lvert x \rangle =
-      \begin{cases}
-      -\lvert x \rangle, & x = 0^n \\
-      \lvert x \rangle, & \text{otherwise}
-      \end{cases}
-      $$</p>
-
-    <h3>Diffusion Operator</h3>
-    <p>Reflect about the uniform superposition <span>$\lvert +^n \rangle$</span> (Hadamard basis):</p>
-    <p style="text-align:center;">$$
-      S_+^\pm = I - 2\lvert +^n \rangle\langle +^n \rvert, \qquad
-      -S_+^\pm\!\left(\sum_x \alpha_x \lvert x \rangle\right) = \sum_x (2\mu - \alpha_x)\lvert x \rangle, \;
-      \mu=\tfrac{1}{2^n}\sum_x
-      \alpha_x
-      $$</p>
-    <p>It can be implemented as <span>$S_+^\pm = H^{\otimes n} S_0^\pm H^{\otimes n}$</span>.</p>
-
-    <h3>Two-Dimensional Picture</h3>
-    <p>Group all unmarked states into <span>$\lvert x_\perp \rangle$</span>, with the marked state <span>$\lvert x_*
-        \rangle$</span>
-      orthogonal to it:</p>
-    <p style="text-align:center;">$$
-      \lvert x_\perp \rangle = \sum_{x \ne x_*} \tfrac{1}{\sqrt{N-1}} \lvert x \rangle, \qquad
-      \lvert +^n \rangle = \sin\theta \lvert x_* \rangle + \cos\theta \lvert x_\perp \rangle, \quad \sin\theta =
-      \tfrac{1}{\sqrt{N}}
-      $$</p>
-
-    <h3>Grover Iterations as Rotations</h3>
-    <p>Define <span>$\lvert \psi_k \rangle = (-S_+^\pm O_f^\pm)^k \lvert +^n \rangle$</span> and <span>$\lvert \psi_k'
-        \rangle = O_f^\pm
-        \lvert \psi_k \rangle$</span>. Each oracle+diffusion block rotates the state by <span>$2\theta$</span> in the
-      plane
-      spanned by <span>$\{\lvert x_* \rangle, \lvert x_\perp \rangle\}$</span>. After <span>$k$</span> iterations, the
-      angle from
-      <span>$\lvert +^n \rangle$</span> is <span>$(2k+1)\theta$</span>. The optimum is reached when <span>$(2k+1)\theta
-        \approx
-        \tfrac{\pi}{2}$</span>, giving
-    </p>
-    <p style="text-align:center;">$$
-      k \approx \frac{\pi}{4\theta} - \frac{1}{2} \;\approx\; \frac{\pi}{4}\sqrt{N} - \tfrac{1}{2}.
-      $$</p>
-  </div>
-  <script>
     // Parameters
     const n = 4;
     const N = 2 ** n;
@@ -185,7 +48,7 @@
       stateHistory.push({ angle: diffusion, label: `$|\\psi_{${i + 1}}\\rangle$`, iteration: i + 1, isOracle: false });
     }
 
-    const buildFrame = (frameIndex) => {
+    const buildFrame = (frameIndex, stageText) => {
       const currentState = stateHistory[frameIndex];
       const angle = currentState.angle;
       const [pMarked, pOther] = probData(angle);
@@ -204,6 +67,8 @@
         { x: 0.14, y: 1.06, xref: "paper", yref: "paper", text: "<b>State Space</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
         { x: 0.42, y: 1.06, xref: "paper", yref: "paper", text: "<b>Probabilities</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
         { x: 0.78, y: 1.06, xref: "paper", yref: "paper", text: "<b>Amplitudes</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        // Current step info
+        { x: 0.5, y: -0.02, xref: "paper", yref: "paper", text: stageText, showarrow: false, font: { size: 14, color: "#6b7280" } },
       ];
 
       // Add arrows for all states up to current frame
@@ -348,7 +213,7 @@
     const data = [
       {
         type: "bar",
-        x: ["marked $|x^{*}\\rangle$", "$|x_{\\perp}\\rangle$"],
+        x: ["marked $|x^{*}\\rangle$", "unmarked subspace"],
         y: probs0,
         marker: { color: ["#F26B38", "#CBD5E1"] },
         hovertemplate: "%{y:.3f}",
@@ -427,8 +292,14 @@
 
     // Frames - build using state history
     const frames = [];
+    const stageTexts = [`Start at $|+^{n}\\rangle$ ($\\theta = ${(theta * 180 / Math.PI).toFixed(2)}^{\\circ}$)`];
+    for (let i = 0; i < numIterations; i++) {
+      stageTexts.push(`Iteration ${i + 1}: oracle reflects $|\\psi\\rangle$ across $|x_{\\perp}\\rangle$`);
+      stageTexts.push(`Iteration ${i + 1}: diffusion reflects across $|+^{n}\\rangle$, rotating by $2\\theta$`);
+    }
+
     for (let i = 0; i < stateHistory.length; i++) {
-      frames.push(buildFrame(i));
+      frames.push(buildFrame(i, stageTexts[i]));
     }
 
     layout.sliders = [
@@ -450,32 +321,20 @@
     const formatOpText = (frameIndex) => {
       const state = stateHistory[frameIndex];
       if (state.iteration === 0) {
-        return `\\text{Init: } |\\psi_0\\rangle = |+^n\\rangle`;
+        return String.raw`\\text{Init: } |\\psi_0\\rangle = |+^n\\rangle`;
       }
       const k = state.iteration;
       if (state.isOracle) {
-        return `\\text{Step ${k}a: } O_f^\\pm \\text{ (phase oracle)}\\\\ \\text{Before: } |\\psi_{${k - 1}}\\rangle\\\\ \\text{After: } |\\psi_{${k}}'\\rangle = O_f^\\pm |\\psi_{${k - 1}}\\rangle`;
+        return String.raw`\\text{Step ${k}a: } O_f^\\pm \\text{ (phase oracle)}\\\\ \\text{Before: } |\\psi_{${k-1}}\\rangle\\\\ \\text{After: } |\\psi_{${k}}'\\rangle = O_f^\\pm |\\psi_{${k-1}}\\rangle`;
       }
-      return `\\text{Step ${k}b: } -S_+^\\pm \\text{ (diffusion)}\\\\ \\text{Before: } |\\psi_{${k}}'\\rangle\\\\ \\text{After: } |\\psi_{${k}}\\rangle = -S_+^\\pm |\\psi_{${k}}'\\rangle`;
+      return String.raw`\\text{Step ${k}b: } -S_+^\\pm \\text{ (diffusion)}\\\\ \\text{Before: } |\\psi_{${k}}'\\rangle\\\\ \\text{After: } |\\psi_{${k}}\\rangle = -S_+^\\pm |\\psi_{${k}}'\\rangle`;
     };
 
     const setOpInfo = (frameIndex) => {
       const body = formatOpText(frameIndex);
-      const state = stateHistory[frameIndex];
-      const k = state.iteration;
-      const condensed = (() => {
-        if (k === 0) {
-          return `|\\psi_0\\rangle = |+^n\\rangle`;
-        }
-        if (state.isOracle) {
-          return `|\\psi_${k}'\\rangle = O_f^\\pm (-S_+^\\pm O_f^\\pm)^{${k - 1}} |+^n\\rangle`;
-        }
-        return `|\\psi_${k}\\rangle = (-S_+^\\pm O_f^\\pm)^{${k}} |+^n\\rangle`;
-      })();
-
-      opinfo.innerHTML = `$$${body}\\\\ \\text{Condensed: } ${condensed}$$`;
+      opinfo.innerHTML = `$$${body}$$<br>$$\\lvert \\psi_k \\rangle = (-S_+^\\pm O_f^\\pm)^k \\lvert +^n \\rangle, \\quad \\lvert \\psi_k' \\rangle = O_f^\\pm (-S_+^\\pm O_f^\\pm)^k \\lvert +^n \\rangle$$`;
       if (window.MathJax && window.MathJax.Hub) {
-        window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub, opinfo]);
+        window.MathJax.Hub.Queue([\"Typeset\", window.MathJax.Hub, opinfo]);
       }
     };
 
@@ -527,7 +386,4 @@
       // Initialize op info
       setOpInfo(0);
     });
-  </script>
-</body>
-
-</html>
+  
