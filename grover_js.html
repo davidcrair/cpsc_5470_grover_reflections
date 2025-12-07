@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Grover Reflections (JS)</title>
+  <script src="https://cdn.plot.ly/plotly-3.3.0.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 12px;
+      font-family: sans-serif;
+    }
+
+    #grover {
+      width: 100%;
+      height: 640px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="grover"></div>
+  <script>
+    // Parameters
+    const n = 4;
+    const N = 2 ** n;
+    const numIterations = 8;
+    const frameMs = 550;
+    const theta = Math.asin(1 / Math.sqrt(N));
+
+    const axisLen = 1.15;
+    const plusDir = [Math.cos(theta), Math.sin(theta)];
+
+    const amplitudeData = (angle) => {
+      const ampMarked = Math.sin(angle);
+      const ampOther = Math.cos(angle) / Math.sqrt(N - 1);
+      const amps = Array.from({ length: N }, (_, i) => (i === 0 ? ampMarked : ampOther));
+      const mean = amps.reduce((a, b) => a + b, 0) / N;
+      return { amps, mean };
+    };
+
+    const probData = (angle) => {
+      const pMarked = Math.sin(angle) ** 2;
+      return [pMarked, 1 - pMarked];
+    };
+
+    const xTicks = Array.from({ length: N }, (_, i) => i.toString(2).padStart(n, "0"));
+
+    // Color palette for iterations (inspired by the reference image)
+    const iterationColors = [
+      "#1f2937", // Initial state (dark gray/black)
+      "#DC2626", // Iteration 1 (red)
+      "#059669", // Iteration 2 (green)
+      "#2563EB", // Iteration 3 (blue)
+      "#7C3AED", // Iteration 4 (purple)
+      "#D97706", // Iteration 5 (amber)
+      "#0891B2", // Iteration 6 (cyan)
+      "#BE185D", // Iteration 7 (pink)
+      "#4338CA", // Iteration 8 (indigo)
+    ];
+
+    // Pre-compute all state angles for history tracking
+    const stateHistory = [];
+    stateHistory.push({ angle: theta, label: "|+ⁿ⟩", iteration: 0, isOracle: false });
+    for (let i = 0; i < numIterations; i++) {
+      const current = theta + 2 * theta * i;
+      const oracle = -current;
+      stateHistory.push({ angle: oracle, label: `|ψ${i + 1}'⟩`, iteration: i + 1, isOracle: true });
+      const diffusion = 2 * theta - oracle;
+      stateHistory.push({ angle: diffusion, label: `|ψ${i + 1}⟩`, iteration: i + 1, isOracle: false });
+    }
+
+    const buildFrame = (frameIndex, stageText) => {
+      const currentState = stateHistory[frameIndex];
+      const angle = currentState.angle;
+      const [pMarked, pOther] = probData(angle);
+      const { amps, mean } = amplitudeData(angle);
+      const probsSq = amps.map((a) => a * a);
+
+      // Build annotations for all previous states + current state
+      const annotations = [
+        // Geometric plot axis labels
+        { x: 1.15, y: -0.08, text: "|x⟂⟩", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
+        { x: 0.08, y: 1.18, text: "|x*⟩", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
+        // Reflection line label
+        { x: plusDir[0] * axisLen * 0.75, y: plusDir[1] * axisLen * 1.15, text: "|+ⁿ⟩", showarrow: false, font: { size: 13, color: "#10B981" }, xref: "x", yref: "y" },
+        // Subplot titles
+        { x: 0.14, y: 1.06, xref: "paper", yref: "paper", text: "<b>State Space</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        { x: 0.42, y: 1.06, xref: "paper", yref: "paper", text: "<b>Probabilities</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        { x: 0.78, y: 1.06, xref: "paper", yref: "paper", text: "<b>Amplitudes</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        // Current step info
+        { x: 0.5, y: -0.02, xref: "paper", yref: "paper", text: stageText, showarrow: false, font: { size: 14, color: "#6b7280" } },
+      ];
+
+      // Add arrows for all states up to current frame
+      // Diffusion states = solid arrows, Oracle states = dashed arrows
+      const oracleShapes = [];
+
+      for (let i = 0; i <= frameIndex; i++) {
+        const state = stateHistory[i];
+        const color = iterationColors[state.iteration] || iterationColors[iterationColors.length - 1];
+        const x = Math.cos(state.angle);
+        const y = Math.sin(state.angle);
+        const isCurrent = (i === frameIndex);
+
+        if (state.isOracle) {
+          // Oracle states shown as dashed arrows
+          oracleShapes.push({
+            type: "line",
+            x0: 0, y0: 0,
+            x1: x, y1: y,
+            xref: "x", yref: "y",
+            line: { color: color, width: isCurrent ? 2.5 : 1.5, dash: "dash" }
+          });
+
+          // Add arrowhead and label
+          annotations.push({
+            x: x, y: y,
+            ax: x * 0.8, ay: y * 0.8,
+            xref: "x", yref: "y", axref: "x", ayref: "y",
+            showarrow: true, arrowhead: 2,
+            arrowsize: isCurrent ? 2 : 1.2,
+            arrowwidth: isCurrent ? 2 : 1.5,
+            arrowcolor: color,
+            text: isCurrent ? state.label : "",
+            font: { size: 12, color: color }
+          });
+        } else {
+          // Diffusion states (and initial state) shown as solid arrows
+          annotations.push({
+            x: x, y: y, ax: 0, ay: 0,
+            xref: "x", yref: "y", axref: "x", ayref: "y",
+            showarrow: true,
+            arrowhead: 2,
+            arrowsize: isCurrent ? 2 : 1.5,
+            arrowwidth: isCurrent ? 3 : 2,
+            arrowcolor: color,
+            text: isCurrent ? state.label : (state.iteration === 0 ? "" : `|ψ${state.iteration}⟩`),
+            font: { size: isCurrent ? 13 : 11, color: color }
+          });
+        }
+      }
+
+      // Combine base shapes with oracle shapes
+      const frameShapes = [...shapes, ...oracleShapes];
+
+      return {
+        name: stateHistory[frameIndex].iteration === 0 ? "0 |+^n>" :
+          (stateHistory[frameIndex].isOracle ?
+            `${stateHistory[frameIndex].iteration}a oracle` :
+            `${stateHistory[frameIndex].iteration}b diffusion`),
+        data: [
+          { y: [pMarked, pOther] },
+          { x: xTicks, y: amps, customdata: probsSq },
+          { x: xTicks, y: Array(N).fill(mean) },
+        ],
+        layout: { annotations, shapes: frameShapes }
+      };
+    };
+
+    // Initial data
+    const startAngle = theta;
+    const { amps: amps0, mean: mean0 } = amplitudeData(startAngle);
+    const probs0 = probData(startAngle);
+
+    const data = [
+      {
+        type: "bar",
+        x: ["marked |x*>", "unmarked subspace"],
+        y: probs0,
+        marker: { color: ["#F26B38", "#CBD5E1"] },
+        hovertemplate: "%{y:.3f}",
+        xaxis: "x2",
+        yaxis: "y2"
+      },
+      {
+        type: "bar",
+        x: xTicks,
+        y: amps0,
+        customdata: amps0.map((a) => a * a),
+        marker: { color: ["#F26B38"].concat(Array(N - 1).fill("#CBD5E1")) },
+        hovertemplate: "state %{x}<br>amp %{y:.3f}<br>prob %{customdata:.3f}",
+        xaxis: "x3",
+        yaxis: "y3"
+      },
+      {
+        type: "scatter",
+        mode: "lines",
+        x: xTicks,
+        y: Array(N).fill(mean0),
+        line: { color: "#10B981", dash: "dash" },
+        hoverinfo: "skip",
+        xaxis: "x3",
+        yaxis: "y3"
+      }
+    ];
+
+    // Shapes for axes and |+^n> reflection line
+    const shapes = [
+      { type: "line", x0: -axisLen, y0: 0, x1: axisLen, y1: 0, line: { color: "#6B7280", width: 1.5 } },
+      { type: "line", x0: 0, y0: -axisLen, x1: 0, y1: axisLen, line: { color: "#6B7280", width: 1.5, dash: "dash" } },
+      { type: "line", x0: -axisLen * plusDir[0], y0: -axisLen * plusDir[1], x1: axisLen * plusDir[0], y1: axisLen * plusDir[1], line: { color: "#10B981", width: 2.5 } },
+    ];
+
+    // Layout
+    const layout = {
+      height: 620,
+      width: 1400,
+      margin: { t: 80, r: 40, l: 60, b: 90 },
+      bargap: 0.25,
+      showlegend: false,
+      title: { text: "Grover's Search as Alternating Reflections", x: 0.5, font: { size: 20 } },
+      xaxis: { anchor: "y", domain: [0.0, 0.28], range: [-1.25, 1.25], showgrid: false, zeroline: false },
+      yaxis: { anchor: "x", domain: [0, 1], range: [-1.25, 1.25], showgrid: false, zeroline: false, scaleanchor: "x", scaleratio: 1 },
+      xaxis2: { anchor: "y2", domain: [0.34, 0.50] },
+      yaxis2: { anchor: "x2", domain: [0, 1], range: [0, 1], title: { text: "Probability" } },
+      xaxis3: { anchor: "y3", domain: [0.56, 1], title: { text: "State" }, type: "category" },
+      yaxis3: { anchor: "x3", domain: [0, 1], range: [-1, 1], title: { text: "Amplitude" } },
+      shapes,
+      annotations: [
+        // Geometric plot axis labels
+        { x: 1.15, y: -0.08, text: "|x⟂⟩", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
+        { x: 0.08, y: 1.18, text: "|x*⟩", showarrow: false, font: { size: 14, color: "#374151" }, xref: "x", yref: "y" },
+        // Reflection line label
+        { x: plusDir[0] * axisLen * 0.75, y: plusDir[1] * axisLen * 1.15, text: "|+ⁿ⟩", showarrow: false, font: { size: 13, color: "#10B981" }, xref: "x", yref: "y" },
+        // Subplot titles
+        { x: 0.14, y: 1.06, xref: "paper", yref: "paper", text: "<b>State Space</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        { x: 0.42, y: 1.06, xref: "paper", yref: "paper", text: "<b>Probabilities</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        { x: 0.78, y: 1.06, xref: "paper", yref: "paper", text: "<b>Amplitudes</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
+        // Current step info (will be updated in frames)
+        { x: 0.5, y: -0.02, xref: "paper", yref: "paper", text: `θ = ${(theta * 180 / Math.PI).toFixed(2)}° — Start at |+ⁿ⟩`, showarrow: false, font: { size: 14, color: "#6b7280" } },
+        // Initial state vector arrow (black)
+        {
+          x: Math.cos(startAngle), y: Math.sin(startAngle),
+          ax: 0, ay: 0,
+          xref: "x", yref: "y", axref: "x", ayref: "y",
+          showarrow: true, arrowhead: 2, arrowsize: 2, arrowwidth: 3, arrowcolor: "#1f2937",
+          text: "|+ⁿ⟩", font: { size: 13, color: "#1f2937" }
+        },
+      ],
+      sliders: [],
+      updatemenus: [
+        {
+          type: "buttons",
+          showactive: true,
+          x: 0.99, y: 1.08, xanchor: "right",
+          buttons: [
+            { label: "▶ Play", method: "animate", args: [null, { frame: { duration: frameMs, redraw: true }, transition: { duration: 180 }, fromcurrent: true }] },
+            { label: "⏸ Pause", method: "animate", args: [[null], { mode: "immediate", frame: { duration: 0, redraw: false } }] },
+          ]
+        }
+      ]
+    };
+
+    // Frames - build using state history
+    const frames = [];
+    const stageTexts = [`Start at |+ⁿ⟩ (θ = ${(theta * 180 / Math.PI).toFixed(2)}°)`];
+    for (let i = 0; i < numIterations; i++) {
+      stageTexts.push(`Iteration ${i + 1}: oracle reflects |ψ⟩ across |x⟂⟩`);
+      stageTexts.push(`Iteration ${i + 1}: diffusion reflects across |+ⁿ⟩, rotating by 2θ`);
+    }
+
+    for (let i = 0; i < stateHistory.length; i++) {
+      frames.push(buildFrame(i, stageTexts[i]));
+    }
+
+    layout.sliders = [
+      {
+        active: 0,
+        len: 0.9,
+        x: 0.05,
+        y: -0.05,
+        currentvalue: { prefix: "Step: " },
+        steps: frames.map(f => ({
+          label: f.name,
+          method: "animate",
+          args: [[f.name], { mode: "immediate", frame: { duration: frameMs, redraw: true }, transition: { duration: 180 } }]
+        }))
+      }
+    ];
+
+    Plotly.newPlot('grover', data, layout, { responsive: true }).then(() => {
+      Plotly.addFrames('grover', frames);
+    });
+  </script>
+</body>
+
+</html>
