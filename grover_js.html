@@ -96,7 +96,7 @@
 <body>
   <div id="slider-hint" class="callout slider">
     <span class="icon">🎚️</span>
-    <span>Use the slider to explore how the system evolves step by step.</span>
+    <span>Read the explainer below and then use the slider to explore how the system evolves step by step.</span>
   </div>
   <div id="refresh-hint" class="callout refresh">
     <span class="icon">⚠️</span>
@@ -106,6 +106,8 @@
   <div id="opinfo" style="text-align:center; margin-top:6px;"></div>
 
   <div id="explainer" class="explainer">
+    <p><strong>Note:</strong> This demo shows a 3-qubit state with the marked item $\lvert 0000 \rangle$; the same
+      reflection steps generalize to any number of qubits and any single marked item.</p>
     <h2>Grover's Algorithm in Brief</h2>
     <p>Grover's search finds a marked item with only <span>$O(\sqrt{N})$</span> oracle calls (vs. <span>$O(N)$</span>
       classically) by alternating two reflections: the phase oracle (flips the marked state's phase) and the diffusion
