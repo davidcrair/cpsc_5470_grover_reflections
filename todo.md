@@ -1,1 +1,0 @@
-- [ ] Update the animation section to show the math behind what the state is, like what reflection is being applied and the concise form of the new state.
