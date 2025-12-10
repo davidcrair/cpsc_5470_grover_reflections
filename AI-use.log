@@ -1,59 +1,64 @@
-# Conversation Log
-
-Timestamp: $ts
-
-## User Messages
-1) Use the attached image and markdown reference to update @graph.py...
-2) What is n in this example?
-3) Can you make little n a slider as well?
-4) It isn't rendering properly, it just shows `}) };` on the screen
-5) That didn't fix it, same issue
-6) In addition to showing the panel with two bars... add basis states panel + mean amplitude line
-7) The y axis scaling of the third panel... also I cannot see the n slider
-8) Make the y axis scale of the amplitude plot fixed at -1 to 1
-9) Remove the n qubits slider temporarily (disable it), set n=4, no autoplay
-10) Make the amplitude plot wider by around 2x
-11) Make the blue vector an arrow not line+circles
-12) Allow the content to take up more screen width
-13) Only use the Plotly arrow annotation, no base trace
-14) Label x-axis of amplitude chart as State and show probability (amp^2) in hover
-15) Remove the "Grover as Sequential Reflections" text
-16) Why is there still the text "measurement probability..." on the chart
-17) It shows the x_perp at the origin; that is not right
-18) There is still a random x_perp at the origin
-19) Now there are two blue arrows and still the erroneous label at the origin
-20) Without editing any code, explain how easy to switch to Plotly JS / JS standalone
-21) Without changing graph.py make a new JavaScript version
-22) In grover_js.html nothing happens when I move the slider
-23) Export all the messages I sent and a summary of what you did to AI-use.log with timestamps if possible
-24) No, after each user message show a brief summary of the change you made
-25) Can you export all actions you took and my messages, so this entire conversation to convo.md?
-
-## Actions Taken
-- Rebuilt graph.py into Grover reflection animation (probability bars, vector plot); generated interactive_graph.html.
-- Clarified n=6 (N=64) for original setup.
-- Added in-page n-slider and client-side frame rebuild.
-- Fixed malformed post_script / template braces causing `}) };` render text.
-- Further template fixes; regenerated HTML.
-- Added basis-state amplitude panel with mean line (third panel).
-- Autoranged amplitude axis per frame; ensured slider initialization after DOM ready.
-- Locked amplitude axis to [-1,1].
-- Disabled n-slider, set default n=4, stopped autoplay.
-- Widened amplitude panel via column widths.
-- Converted state vector to arrow annotation.
-- Expanded canvas width to 1400px.
-- Removed base trace, kept arrow annotation only.
-- Added State x-axis label; hover shows amp and prob=amp^2.
-- Removed subplot title text.
-- Cleared all subplot titles.
-- Moved |x⟂⟩ label off origin (left of axis).
-- Removed placeholder annotation; repositioned label again.
-- Removed duplicate arrow; kept single arrow; adjusted label.
-- Provided explanation of ease to switch to Plotly JS / plain JS.
-- Added standalone Plotly JS file grover_js.html (n=4).
-- Wired slider by adding Plotly.addFrames after newPlot.
-- Logged messages and summary to AI-use.log.
-- Updated AI-use.log with per-message action mapping.
-- Exported conversation/actions to convo.md (this file).
-
-Files created/modified in this logging step: convo.md
+[$ts] USER_MESSAGES & ACTIONS:
+1) User: Use the attached image... grover progression.  Action: Replaced graph.py with Grover reflection animation (vector + probability bars), generated interactive_graph.html.
+2) User: What is n in this example?  Action: Clarified n=6 (N=64).
+3) User: Make little n a slider.  Action: Added in-page n slider, rebuilt HTML.
+4) User: Rendering shows `}) };`.  Action: Fixed post_script formatting.
+5) User: Same issue.  Action: Further fixed template braces; HTML regenerated.
+6) User: Add basis-state panel + mean line.  Action: Added third panel with amplitudes and mean.
+7) User: y-scale not updating; slider missing.  Action: Autorange y3 in frames; rewired slider init after DOMContentLoaded.
+8) User: Fix amplitude y to [-1,1].  Action: Locked y3 range in layout and frames.
+9) User: Disable n slider, set n=4, no autoplay.  Action: Removed slider JS, default n=4, pause on load.
+10) User: Make amplitude plot ~2x wider.  Action: Adjusted column widths to widen third panel.
+11) User: Show vector as arrow.  Action: Swapped line/markers for arrow annotation on state.
+12) User: Allow more screen width.  Action: Increased canvas width to 1400.
+13) User: Only arrow annotation, no base trace.  Action: Removed base |ψ⟩ trace; arrow via annotations only.
+14) User: Label state axis, show prob=amp^2 in hover.  Action: Added x-axis label; hover shows prob.
+15) User: Remove “Grover as Sequential Reflections” text.  Action: Cleared subplot title.
+16) User: Text “measurement probability...” still shows.  Action: Cleared all subplot titles.
+17) User: |x⟂⟩ at origin wrong.  Action: Moved label left of axis.
+18) User: Still random |x⟂⟩ at origin.  Action: Removed placeholder annotation; repositioned label.
+19) User: Two arrows + label issue.  Action: Removed base arrow; kept frame arrow; adjusted label.
+20) User: How easy to switch to JS / Plotly JS.  Action: Provided explanation (no code changes).
+21) User: Make new JS version without touching graph.py.  Action: Added grover_js.html (Plotly JS).
+22) User: grover_js slider does nothing.  Action: Added Plotly.addFrames after newPlot to wire slider.
+23) User: Export messages + summary.  Action: Logged to AI-use.log (this file).
+24) User: Can you open grover_js.html and look at it?  Action: Inspected the Plotly demo and noted the amplitude chart x-axis was numeric instead of binary plus general layout observations.
+25) User: Fix grover_js.html issues vs interactive_graph.html.  Action: Rebuilt layout/axis anchors and xaxis mappings so probability/amplitude panels render in correct domains.
+26) User: Arrow missing on state space and plots unlabeled.  Action: Added visible state arrow annotation and plot titles/axis labels.
+27) User: Show past state vectors in different colors.  Action: Added multi-colored history arrows/labels for each iteration in the left plot.
+28) User: Two red arrows appear in step 1a.  Action: Removed duplicate oracle arrow so only one dashed oracle arrow is drawn.
+29) User: Dashed arrows disappear after they are shown.  Action: Kept previous oracle arrows persistent across later frames.
+30) User: Arrow labels sit at origin.  Action: Moved arrow labels to arrow tips via annotations.
+31) User: Arrows/labels don’t clear when moving slider backward.  Action: Relayouts full annotations/shapes per frame to avoid stale arrows when scrubbing.
+32) User: Add black dashed arrow from tip of state n to state n+1.  Action: Added dashed connector arrows between successive state tips.
+33) User: Connectors lack arrowheads.  Action: Swapped connectors to annotations with arrowheads for direction.
+34) User: Dashed-origins labels vanish after the step.  Action: Persisted oracle labels by reapplying prior annotations each frame.
+35) User: MathJax ket not rendering at grover_js.html:65.  Action: Explained correct \lvert … \rangle syntax and escaping for MathJax.
+36) User: Switch annotations to LaTeX where possible.  Action: Converted labels/annotations to MathJax bra/ket and loaded MathJax config.
+37) User: Show |+^n> as a solid black vector permanently.  Action: Replaced green reflection line with a permanent black |+^n⟩ arrow.
+38) User: |+^n> arrow has two heads.  Action: Simplified the |+^n⟩ arrow to a single arrowhead.
+39) User: Arrow still has two heads.  Action: Further cleaned annotations so only one arrowhead remains.
+40) User: Add markdown explainer below the figure.  Action: Inserted MathJax-rendered explainer/summary beneath the Plotly graphic.
+41) User: \ket/\bra not working; some LaTeX fails.  Action: Patched explainer markup and MathJax usage so bra/ket render properly.
+42) User: Provided reference snippet to see rendering issues.  Action: Added full MathJax config and rewired annotations consistent with the reference to fix LaTeX rendering.
+43) User: Dynamic LaTeX under the slider isn’t rendering.  Action: Re-typeset opinfo on slider/animation events so changing formulas display.
+44) User: Add condensed |ψ_k> expression under before/after lines.  Action: Added slider-driven condensed expression |ψ_k⟩ = (-S_+^± O_f^±)^k |+^n⟩.
+45) User: Show \ket{x_\perp} instead of “unmarked subspace”.  Action: Relabeled probability bars to |x_\perp⟩.
+46) User: Random annotation toggles between ψ and +^n; remove it.  Action: Removed stray annotation and enforced full annotation replacement each frame.
+47) User: Add low-opacity dashed outlines showing previous bars.  Action: Added faint dashed outlines/rectangles for prior probability and amplitude bars.
+48) User: Outline current bars in black and add legend for last vs current.  Action: Outlined current bars, kept previous translucent, and added legend groups.
+49) User: I don’t see any legend.  Action: Enabled legend display.
+50) User: Legend trace 4 should say mean amplitude; remove play/pause.  Action: Renamed mean-amplitude legend entry and removed animation buttons.
+51) User: Make previous outlines dashed instead of solid.  Action: Tweaked previous-step bar outlines to use dashed strokes.
+52) User: Outlines not visible.  Action: Increased outline contrast/width so dashed previews show up.
+53) User: Previous outlines are solid, not dashed.  Action: Tried another dashed-border approach to keep outlines dashed.
+54) User: Dashed still not working; see StackOverflow link.  Action: Implemented dashed borders via scatter/shape overlay per StackOverflow technique.
+55) User: Revert fills to low-opacity.  Action: Restored translucent fills for previous-step bars.
+56) User: Remove pattern; keep solid low opacity.  Action: Removed pattern fills and kept simple translucent previous bars.
+57) User: Add prominent text telling users to use the slider.  Action: Added a callout prompting users to explore with the slider.
+58) User: Move callout to top and add refresh warning.  Action: Moved callout above the plot and added a refresh-if-glitch warning.
+59) User: Make those two separate callouts.  Action: Split into two callouts for instruction and warning.
+60) User: Make slider callout blue and warning orange with icons.  Action: Styled callouts with blue/orange colors and icons.
+61) User: Add note that this example is a 3-qubit state with marked |0000⟩ but generalizes.  Action: Added note in explainer about the example state and generalization to any qubit count/single marked item.
+62) User: Add citations from the provided appendix reference.  Action: Inserted appendix-style citations throughout the explainer.
+63) User: Change citations to “(See Appendix A/B)”.  Action: Standardized citation text to the requested “See Appendix X” format.
