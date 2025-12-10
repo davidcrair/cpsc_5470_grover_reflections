@@ -184,6 +184,8 @@
 
     const axisLen = 1.15;
     const plusDir = [Math.cos(theta), Math.sin(theta)];
+    const thetaArcR = 0.35;
+    const thetaArcPath = `M ${thetaArcR} 0 A ${thetaArcR} ${thetaArcR} 0 0 1 ${(Math.cos(theta) * thetaArcR).toFixed(4)} ${(Math.sin(theta) * thetaArcR).toFixed(4)}`;
 
     const amplitudeData = (angle) => {
       const ampMarked = Math.sin(angle);
@@ -245,6 +247,7 @@
         // Reflection direction |+^n>
         { x: plusDir[0] * axisLen * 0.75, y: plusDir[1] * axisLen * 1.15, text: "$|+^{n}\\rangle$", showarrow: false, font: { size: 13, color: "#111827" }, xref: "x", yref: "y" },
         { x: plusDir[0] * axisLen, y: plusDir[1] * axisLen, ax: 0, ay: 0, xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true, arrowhead: 2, arrowsize: 2, arrowwidth: 3, arrowcolor: "#111827", text: "" },
+        { x: plusDir[0] * thetaArcR * 1.1, y: plusDir[1] * thetaArcR * 0.7, text: "$\\theta$", showarrow: false, font: { size: 12, color: "#111827" }, xref: "x", yref: "y" },
         // Subplot titles
         { x: 0.14, y: 1.06, xref: "paper", yref: "paper", text: "<b>State Space</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
         { x: 0.42, y: 1.06, xref: "paper", yref: "paper", text: "<b>Probabilities</b>", showarrow: false, font: { size: 15, color: "#1f2937" } },
@@ -548,6 +551,7 @@
     const shapes = [
       { type: "line", x0: -axisLen, y0: 0, x1: axisLen, y1: 0, line: { color: "#6B7280", width: 1.5 } },
       { type: "line", x0: 0, y0: -axisLen, x1: 0, y1: axisLen, line: { color: "#6B7280", width: 1.5, dash: "dash" } },
+      { type: "path", path: thetaArcPath, line: { color: "#111827", width: 1.4 } },
     ];
 
     // Layout
