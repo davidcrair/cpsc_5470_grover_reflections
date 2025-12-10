@@ -113,12 +113,13 @@
       classically) by alternating two reflections: the phase oracle (flips the marked state's phase) and the diffusion
       operator (reflects amplitudes about their mean). Repeating these steps rotates the state toward the marked item,
       boosting its measurement probability. Too many iterations rotate past the optimum; with one marked item, the best
-      count is <span>$\approx \tfrac{\pi}{4}\sqrt{N}$</span>. With multiple marked items, the optimal count changes.</p>
+      count is <span>$\approx \tfrac{\pi}{4}\sqrt{N}$</span>. With multiple marked items, the optimal count changes (see
+      Appendix E).</p>
 
     <h3>Searching Problem</h3>
     <p>Given data indexed by <span>$x \in \{0,1\}^n$</span> and a Boolean function <span>$f : \{0,1\}^n \to
-        \{0,1\}$</span>, find the marked item <span>$x_*$</span> with <span>$f(x_*) = 1$</span>. The phase-oracle form:
-    </p>
+        \{0,1\}$</span>, find the marked item <span>$x_*$</span> with <span>$f(x_*) = 1$</span>. The phase-oracle form
+      (see Appendix A):</p>
     <p style="text-align:center;">$$
       O_f^\pm \lvert x \rangle =
       \begin{cases}
@@ -128,7 +129,7 @@
       $$</p>
 
     <h3>Oracles as Reflections</h3>
-    <p>A reflection about <span>$\lvert 0^n \rangle$</span> is</p>
+    <p>A reflection about <span>$\lvert 0^n \rangle$</span> is (see Appendix B)</p>
     <p style="text-align:center;">$$
       S_0^\pm = I - 2\lvert 0^n \rangle\langle 0^n \rvert, \qquad
       S_0^\pm \lvert x \rangle =
@@ -139,7 +140,7 @@
       $$</p>
 
     <h3>Diffusion Operator</h3>
-    <p>Reflect about the uniform superposition <span>$\lvert +^n \rangle$</span> (Hadamard basis):</p>
+    <p>Reflect about the uniform superposition <span>$\lvert +^n \rangle$</span> (Hadamard basis) (see Appendix C):</p>
     <p style="text-align:center;">$$
       S_+^\pm = I - 2\lvert +^n \rangle\langle +^n \rvert, \qquad
       -S_+^\pm\!\left(\sum_x \alpha_x \lvert x \rangle\right) = \sum_x (2\mu - \alpha_x)\lvert x \rangle, \;
@@ -151,7 +152,7 @@
     <h3>Two-Dimensional Picture</h3>
     <p>Group all unmarked states into <span>$\lvert x_\perp \rangle$</span>, with the marked state <span>$\lvert x_*
         \rangle$</span>
-      orthogonal to it:</p>
+      orthogonal to it (see Appendix E):</p>
     <p style="text-align:center;">$$
       \lvert x_\perp \rangle = \sum_{x \ne x_*} \tfrac{1}{\sqrt{N-1}} \lvert x \rangle, \qquad
       \lvert +^n \rangle = \sin\theta \lvert x_* \rangle + \cos\theta \lvert x_\perp \rangle, \quad \sin\theta =
@@ -167,7 +168,7 @@
       angle from
       <span>$\lvert +^n \rangle$</span> is <span>$(2k+1)\theta$</span>. The optimum is reached when <span>$(2k+1)\theta
         \approx
-        \tfrac{\pi}{2}$</span>, giving
+        \tfrac{\pi}{2}$</span>, giving (see Appendix E)
     </p>
     <p style="text-align:center;">$$
       k \approx \frac{\pi}{4\theta} - \frac{1}{2} \;\approx\; \frac{\pi}{4}\sqrt{N} - \tfrac{1}{2}.
