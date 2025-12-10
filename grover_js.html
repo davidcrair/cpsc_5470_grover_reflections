@@ -204,7 +204,7 @@
 
     // Color palette for iterations (inspired by the reference image)
     const iterationColors = [
-      "#1f2937", // Initial state (dark gray/black)
+      "#6B7280", // Initial state (gray)
       "#DC2626", // Iteration 1 (red)
       "#059669", // Iteration 2 (green)
       "#2563EB", // Iteration 3 (blue)
@@ -217,13 +217,13 @@
 
     // Pre-compute all state angles for history tracking
     const stateHistory = [];
-    stateHistory.push({ angle: theta, label: "$\\lvert +^{n} \\rangle$", iteration: 0, isOracle: false });
+    stateHistory.push({ angle: theta, label: "$\\lvert \\psi_{0} \\rangle$", iteration: 0, isOracle: false, k: 0 });
     for (let i = 0; i < numIterations; i++) {
       const current = theta + 2 * theta * i;
       const oracle = -current;
-      stateHistory.push({ angle: oracle, label: `$|\\psi_{${i + 1}}'\\rangle$`, iteration: i + 1, isOracle: true });
+      stateHistory.push({ angle: oracle, label: `$|\\psi_{${i}}'\\rangle$`, iteration: i + 1, isOracle: true, k: i });
       const diffusion = 2 * theta - oracle;
-      stateHistory.push({ angle: diffusion, label: `$|\\psi_{${i + 1}}\\rangle$`, iteration: i + 1, isOracle: false });
+      stateHistory.push({ angle: diffusion, label: `$|\\psi_{${i + 1}}\\rangle$`, iteration: i + 1, isOracle: false, k: i + 1 });
     }
 
     const buildFrame = (frameIndex) => {
@@ -295,7 +295,8 @@
 
       for (let i = 0; i <= frameIndex; i++) {
         const state = stateHistory[i];
-        const color = iterationColors[state.iteration] || iterationColors[iterationColors.length - 1];
+        const colorIdx = (state.k !== undefined) ? state.k : state.iteration;
+        const color = iterationColors[colorIdx] || iterationColors[iterationColors.length - 1];
         const x = Math.cos(state.angle);
         const y = Math.sin(state.angle);
         const isCurrent = (i === frameIndex);
@@ -615,11 +616,13 @@
       if (state.iteration === 0) {
         return `\\text{Init: } |\\psi_0\\rangle = |+^n\\rangle`;
       }
-      const k = state.iteration;
+      const stepNum = state.iteration;
+      const k = state.k;
       if (state.isOracle) {
-        return `\\text{Step ${k}a: } O_f^\\pm \\text{ (phase oracle)}\\\\ \\text{Before: } |\\psi_{${k - 1}}\\rangle\\\\ \\text{After: } |\\psi_{${k}}'\\rangle = O_f^\\pm |\\psi_{${k - 1}}\\rangle`;
+        return `\\text{Step ${stepNum}a: } O_f^\\pm \\text{ (phase oracle)}\\\\ \\text{Before: } |\\psi_{${k}}\\rangle\\\\ \\text{After: } |\\psi_{${k}}'\\rangle = O_f^\\pm |\\psi_{${k}}\\rangle`;
       }
-      return `\\text{Step ${k}b: } -S_+^\\pm \\text{ (diffusion)}\\\\ \\text{Before: } |\\psi_{${k}}'\\rangle\\\\ \\text{After: } |\\psi_{${k}}\\rangle = -S_+^\\pm |\\psi_{${k}}'\\rangle`;
+      const beforeIdx = Math.max(0, k - 1);
+      return `\\text{Step ${stepNum}b: } -S_+^\\pm \\text{ (diffusion)}\\\\ \\text{Before: } |\\psi_{${beforeIdx}}'\\rangle\\\\ \\text{After: } |\\psi_{${k}}\\rangle = -S_+^\\pm |\\psi_{${beforeIdx}}'\\rangle`;
     };
 
     const setOpInfo = (frameIndex) => {
@@ -630,10 +633,11 @@
         if (k === 0) {
           return `|\\psi_0\\rangle = |+^n\\rangle`;
         }
+        const kk = state.k;
         if (state.isOracle) {
-          return `|\\psi_${k}'\\rangle = O_f^\\pm (-S_+^\\pm O_f^\\pm)^{${k - 1}} |+^n\\rangle`;
+          return `|\\psi_${kk}'\\rangle = O_f^\\pm (-S_+^\\pm O_f^\\pm)^{${kk}} |+^n\\rangle`;
         }
-        return `|\\psi_${k}\\rangle = (-S_+^\\pm O_f^\\pm)^{${k}} |+^n\\rangle`;
+        return `|\\psi_${kk}\\rangle = (-S_+^\\pm O_f^\\pm)^{${kk}} |+^n\\rangle`;
       })();
 
       opinfo.innerHTML = `$$${body}\\\\ \\text{Condensed: } ${condensed}$$`;
